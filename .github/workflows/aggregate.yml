@@ -1,0 +1,45 @@
+name: Aggregate Leaderboard Data
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'model_results/*/results/eval/*.json'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  aggregate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.BENCHMARK_BOT_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Regenerate leaderboard data
+        run: python aggregator.py
+
+      - name: Commit updated data artifacts
+        shell: bash
+        run: |
+          git config user.name "fxquantbench-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data
+
+          if git diff --cached --quiet; then
+            echo "No data changes detected."
+            exit 0
+          fi
+
+          git commit -m "build: refresh leaderboard data"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

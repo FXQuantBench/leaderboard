@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FXQuantBench Leaderboard</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23bc7b2e'/%3E%3Cpath d='M16 18h32v6H23v9h21v6H23v13h-7V18zm12 0h20v6H28z' fill='%23fff6ea'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #f4efe6;
+      --bg-accent: #efe2cb;
+      --surface: rgba(255, 252, 246, 0.82);
+      --surface-strong: rgba(255, 248, 237, 0.95);
+      --surface-border: rgba(106, 72, 42, 0.16);
+      --text: #2f2418;
+      --muted: #74614d;
+      --line: rgba(106, 72, 42, 0.18);
+      --shadow: 0 20px 60px rgba(93, 66, 40, 0.12);
+      --gold: #bc7b2e;
+      --green: #23784d;
+      --red: #b04a3e;
+      --blue: #0d6d86;
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background:
+        radial-gradient(circle at top left, rgba(188, 123, 46, 0.22), transparent 30%),
+        radial-gradient(circle at top right, rgba(13, 109, 134, 0.14), transparent 24%),
+        linear-gradient(180deg, #f7f1e6 0%, #f0e7d7 48%, #efe8dc 100%);
+      color: var(--text);
+      font-family: "Space Grotesk", sans-serif;
+    }
+
+    body {
+      padding: 32px 18px 36px;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .shell {
+      position: relative;
+      max-width: 1280px;
+      margin: 0 auto;
+      display: grid;
+      gap: 24px;
+    }
+
+    .card {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-xl);
+      background: var(--surface);
+      backdrop-filter: blur(18px);
+      box-shadow: var(--shadow);
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0));
+      pointer-events: none;
+    }
+
+    .hero {
+      padding: 30px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.8fr) minmax(260px, 1fr);
+      gap: 24px;
+      align-items: end;
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--gold);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.82rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(2.3rem, 5vw, 4.5rem);
+      line-height: 0.95;
+      letter-spacing: -0.05em;
+    }
+
+    .hero p {
+      margin: 14px 0 0;
+      max-width: 54ch;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    .hero-stats {
+      display: grid;
+      gap: 12px;
+    }
+
+    .stat-tile {
+      padding: 16px 18px;
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(106, 72, 42, 0.12);
+      background: var(--surface-strong);
+    }
+
+    .stat-label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    .stat-value {
+      display: block;
+      font-size: 1.25rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .section-card {
+      padding: 24px;
+    }
+
+    .section-head {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+
+    .section-head h2 {
+      margin: 0;
+      font-size: 1.35rem;
+    }
+
+    .section-head p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--line);
+      background: rgba(255, 252, 248, 0.78);
+    }
+
+    table {
+      width: 100%;
+      min-width: 1040px;
+      border-collapse: collapse;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      padding: 16px 12px;
+      background: rgba(255, 248, 239, 0.94);
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      text-align: left;
+    }
+
+    tbody tr {
+      cursor: pointer;
+      transition: background-color 180ms ease, transform 180ms ease;
+    }
+
+    tbody tr:hover,
+    tbody tr:focus-visible,
+    tbody tr.is-selected {
+      background: rgba(188, 123, 46, 0.08);
+    }
+
+    tbody td {
+      padding: 15px 12px;
+      border-bottom: 1px solid rgba(106, 72, 42, 0.08);
+      font-size: 0.96rem;
+      vertical-align: middle;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .rank-cell {
+      width: 70px;
+      font-weight: 700;
+    }
+
+    .mono {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.88rem;
+    }
+
+    .model-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .model-name {
+      font-weight: 700;
+    }
+
+    .metric-stack {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .delta-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .delta-badge.up {
+      color: var(--green);
+      background: rgba(35, 120, 77, 0.12);
+    }
+
+    .delta-badge.down {
+      color: var(--red);
+      background: rgba(176, 74, 62, 0.12);
+    }
+
+    .delta-badge.flat {
+      color: var(--blue);
+      background: rgba(13, 109, 134, 0.12);
+    }
+
+    .sort-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      font: inherit;
+      letter-spacing: inherit;
+      text-transform: inherit;
+    }
+
+    .sort-button::after {
+      content: attr(data-indicator);
+      color: var(--gold);
+      font-size: 0.8rem;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.55fr) minmax(280px, 0.95fr);
+      gap: 24px;
+    }
+
+    .chart-card,
+    .panel-card {
+      padding: 24px;
+    }
+
+    .chart-shell {
+      position: relative;
+      min-height: 380px;
+    }
+
+    .panel-card {
+      display: grid;
+      gap: 16px;
+      align-content: start;
+      background: linear-gradient(180deg, rgba(255, 249, 241, 0.96), rgba(249, 240, 225, 0.86));
+    }
+
+    .panel-card h3 {
+      margin: 0;
+      font-size: 1.2rem;
+    }
+
+    .panel-kicker {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+
+    .detail-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .detail-item {
+      padding: 14px;
+      border: 1px solid rgba(106, 72, 42, 0.12);
+      border-radius: var(--radius-md);
+      background: rgba(255, 255, 255, 0.58);
+    }
+
+    .detail-item span {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .detail-item strong,
+    .detail-item a {
+      font-size: 0.95rem;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+
+    .empty-state,
+    .status-banner {
+      padding: 16px 18px;
+      border: 1px dashed var(--line);
+      border-radius: var(--radius-lg);
+      color: var(--muted);
+      background: rgba(255, 252, 248, 0.66);
+    }
+
+    .status-banner.error {
+      color: var(--red);
+      border-color: rgba(176, 74, 62, 0.26);
+      background: rgba(176, 74, 62, 0.08);
+    }
+
+    footer {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 24px;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 4px 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    footer nav {
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    footer a {
+      text-decoration-thickness: 2px;
+      text-underline-offset: 0.16em;
+    }
+
+    @media (max-width: 960px) {
+      .hero,
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .chart-shell {
+        min-height: 320px;
+      }
+    }
+
+    @media (max-width: 680px) {
+      body {
+        padding: 18px 12px 28px;
+      }
+
+      .hero,
+      .section-card,
+      .chart-card,
+      .panel-card {
+        padding: 20px;
+      }
+
+      .hero h1 {
+        font-size: clamp(2rem, 11vw, 3.2rem);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="card hero">
+      <div>
+        <p class="eyebrow">Forex Quant Dev Benchmark</p>
+        <h1>FXQuantBench Leaderboard</h1>
+        <p>Daily out-of-sample standings for model-driven FX strategies. Rankings are aggregated from committed eval snapshots and the equity chart compounds every model from a shared 100 baseline.</p>
+      </div>
+      <div class="hero-stats">
+        <div class="stat-tile">
+          <span class="stat-label">Last updated</span>
+          <strong class="stat-value" id="updated-at">Loading…</strong>
+        </div>
+        <div class="stat-tile">
+          <span class="stat-label">Tracked models</span>
+          <strong class="stat-value" id="model-count">0</strong>
+        </div>
+        <div class="stat-tile">
+          <span class="stat-label">Aggregate active days</span>
+          <strong class="stat-value" id="days-active-total">0</strong>
+        </div>
+      </div>
+    </header>
+
+    <section class="card section-card">
+      <div class="section-head">
+        <div>
+          <h2>Rankings</h2>
+          <p>Click any header to sort. Sharpe deltas compare the current snapshot against the previous published leaderboard.</p>
+        </div>
+      </div>
+      <div id="status-banner" class="status-banner">Loading leaderboard data…</div>
+      <div id="table-empty" class="empty-state" hidden>No leaderboard entries are available yet.</div>
+      <div class="table-wrap" id="table-wrap" hidden>
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Rank</th>
+              <th scope="col"><button class="sort-button" type="button" data-sort="model_id" data-indicator="">Model</button></th>
+              <th scope="col"><button class="sort-button" type="button" data-sort="provider" data-indicator="">Provider</button></th>
+              <th scope="col"><button class="sort-button" type="button" data-sort="sharpe" data-indicator="▼">Sharpe</button></th>
+              <th scope="col"><button class="sort-button" type="button" data-sort="max_drawdown" data-indicator="">Max Drawdown</button></th>
+              <th scope="col"><button class="sort-button" type="button" data-sort="win_rate" data-indicator="">Win Rate</button></th>
+              <th scope="col"><button class="sort-button" type="button" data-sort="calmar_ratio" data-indicator="">Calmar</button></th>
+              <th scope="col"><button class="sort-button" type="button" data-sort="total_trades" data-indicator="">Trades</button></th>
+              <th scope="col"><button class="sort-button" type="button" data-sort="days_active" data-indicator="">Days Active</button></th>
+              <th scope="col"><button class="sort-button" type="button" data-sort="current_strategy_version" data-indicator="">Version</button></th>
+            </tr>
+          </thead>
+          <tbody id="rankings-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="detail-grid">
+      <div class="card chart-card">
+        <div class="section-head">
+          <div>
+            <h2>Equity Curve</h2>
+            <p>Every line compounds daily eval returns from a normalized starting value of 100. Click a legend entry to hide or show that model.</p>
+          </div>
+        </div>
+        <div class="chart-shell">
+          <canvas id="equity-chart"></canvas>
+        </div>
+      </div>
+
+      <aside class="card panel-card">
+        <p class="eyebrow">Model Panel</p>
+        <h3 id="panel-title">Choose a model</h3>
+        <p class="panel-kicker" id="panel-subtitle">Select a row from the rankings table to inspect the current public metadata and latest equity timestamp.</p>
+        <div class="detail-list" id="panel-details"></div>
+      </aside>
+    </section>
+
+    <footer>
+      <span>Public leaderboard for the FXQuantBench benchmark.</span>
+      <nav>
+        <a href="https://github.com/fxquantbench" target="_blank" rel="noreferrer">GitHub org</a>
+        <a href="https://github.com/FXQuantBench/.github/issues/new?template=new-model-request.md" target="_blank" rel="noreferrer">Contributing</a>
+      </nav>
+    </footer>
+  </div>
+
+  <script>
+    const numberFormatter = new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+
+    const integerFormatter = new Intl.NumberFormat("en-US", {
+      maximumFractionDigits: 0,
+    });
+
+    const dateFormatter = new Intl.DateTimeFormat("en-US", {
+      dateStyle: "medium",
+      timeStyle: "short",
+      timeZone: "UTC",
+    });
+
+    const sortDefaults = {
+      model_id: "asc",
+      provider: "asc",
+      sharpe: "desc",
+      max_drawdown: "asc",
+      win_rate: "desc",
+      calmar_ratio: "desc",
+      total_trades: "desc",
+      days_active: "desc",
+      current_strategy_version: "asc",
+    };
+
+    const datasetPalette = [
+      "#bc7b2e",
+      "#0d6d86",
+      "#23784d",
+      "#d05642",
+      "#5a53a4",
+      "#7d4d98",
+      "#166a67",
+      "#bf9240",
+    ];
+
+    const state = {
+      leaderboard: null,
+      previousByModel: new Map(),
+      equityByModel: new Map(),
+      selectedModelId: null,
+      sortKey: "sharpe",
+      sortDirection: "desc",
+      chart: null,
+    };
+
+    const elements = {
+      updatedAt: document.getElementById("updated-at"),
+      modelCount: document.getElementById("model-count"),
+      daysActiveTotal: document.getElementById("days-active-total"),
+      statusBanner: document.getElementById("status-banner"),
+      tableEmpty: document.getElementById("table-empty"),
+      tableWrap: document.getElementById("table-wrap"),
+      rankingsBody: document.getElementById("rankings-body"),
+      panelTitle: document.getElementById("panel-title"),
+      panelSubtitle: document.getElementById("panel-subtitle"),
+      panelDetails: document.getElementById("panel-details"),
+      chartCanvas: document.getElementById("equity-chart"),
+      sortButtons: Array.from(document.querySelectorAll("[data-sort]")),
+    };
+
+    async function fetchJson(url, fallback) {
+      const response = await fetch(url);
+      if (!response.ok) {
+        if (fallback !== undefined) {
+          return fallback;
+        }
+        throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
+      }
+      return response.json();
+    }
+
+    function formatMetric(value) {
+      return numberFormatter.format(Number(value || 0));
+    }
+
+    function formatPercent(value) {
+      return `${numberFormatter.format(Number(value || 0) * 100)}%`;
+    }
+
+    function formatInteger(value) {
+      return integerFormatter.format(Number(value || 0));
+    }
+
+    function formatTimestamp(value) {
+      if (!value) {
+        return "Unavailable";
+      }
+
+      const parsed = new Date(value);
+      if (Number.isNaN(parsed.getTime())) {
+        return value;
+      }
+
+      return `${dateFormatter.format(parsed)} UTC`;
+    }
+
+    function getSortedModels() {
+      if (!state.leaderboard) {
+        return [];
+      }
+
+      return [...state.leaderboard.models].sort((left, right) => {
+        const leftValue = left[state.sortKey];
+        const rightValue = right[state.sortKey];
+        let comparison = 0;
+
+        if (typeof leftValue === "number" && typeof rightValue === "number") {
+          comparison = leftValue - rightValue;
+        } else {
+          comparison = String(leftValue || "").localeCompare(String(rightValue || ""), undefined, {
+            sensitivity: "base",
+            numeric: true,
+          });
+        }
+
+        if (comparison === 0) {
+          comparison = String(left.model_id).localeCompare(String(right.model_id), undefined, {
+            sensitivity: "base",
+            numeric: true,
+          });
+        }
+
+        return state.sortDirection === "asc" ? comparison : -comparison;
+      });
+    }
+
+    function getSharpeDelta(model) {
+      const previous = state.previousByModel.get(model.model_id);
+      if (!previous || typeof previous.sharpe !== "number") {
+        return null;
+      }
+
+      return Number(model.sharpe) - Number(previous.sharpe);
+    }
+
+    function buildDeltaBadge(delta) {
+      if (delta === null) {
+        return null;
+      }
+
+      const badge = document.createElement("span");
+      badge.className = "delta-badge";
+
+      if (delta > 0) {
+        badge.classList.add("up");
+        badge.textContent = `▲ ${formatMetric(Math.abs(delta))}`;
+        return badge;
+      }
+
+      if (delta < 0) {
+        badge.classList.add("down");
+        badge.textContent = `▼ ${formatMetric(Math.abs(delta))}`;
+        return badge;
+      }
+
+      badge.classList.add("flat");
+      badge.textContent = `= ${formatMetric(0)}`;
+      return badge;
+    }
+
+    function updateSortIndicators() {
+      for (const button of elements.sortButtons) {
+        if (button.dataset.sort === state.sortKey) {
+          button.dataset.indicator = state.sortDirection === "asc" ? "▲" : "▼";
+          continue;
+        }
+        button.dataset.indicator = "";
+      }
+    }
+
+    function selectModel(modelId) {
+      state.selectedModelId = modelId;
+      renderTable();
+      renderPanel();
+    }
+
+    function renderTable() {
+      const sortedModels = getSortedModels();
+      elements.rankingsBody.replaceChildren();
+
+      sortedModels.forEach((model, index) => {
+        const row = document.createElement("tr");
+        row.tabIndex = 0;
+        row.className = model.model_id === state.selectedModelId ? "is-selected" : "";
+        row.addEventListener("click", () => selectModel(model.model_id));
+        row.addEventListener("keydown", (event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            selectModel(model.model_id);
+          }
+        });
+
+        const rankCell = document.createElement("td");
+        rankCell.className = "rank-cell";
+        rankCell.textContent = String(index + 1);
+        row.appendChild(rankCell);
+
+        const modelCell = document.createElement("td");
+        modelCell.className = "model-cell";
+        const modelName = document.createElement("span");
+        modelName.className = "model-name";
+        modelName.textContent = model.model_id;
+        const modelHint = document.createElement("span");
+        modelHint.className = "mono";
+        modelHint.textContent = model.repo_url || "No repo URL";
+        modelCell.append(modelName, modelHint);
+        row.appendChild(modelCell);
+
+        row.appendChild(createTextCell(model.provider || "Unknown"));
+
+        const sharpeCell = document.createElement("td");
+        const sharpeStack = document.createElement("div");
+        sharpeStack.className = "metric-stack";
+        const sharpeValue = document.createElement("span");
+        sharpeValue.textContent = formatMetric(model.sharpe);
+        sharpeStack.appendChild(sharpeValue);
+        const badge = buildDeltaBadge(getSharpeDelta(model));
+        if (badge) {
+          sharpeStack.appendChild(badge);
+        }
+        sharpeCell.appendChild(sharpeStack);
+        row.appendChild(sharpeCell);
+
+        row.appendChild(createTextCell(formatPercent(model.max_drawdown)));
+        row.appendChild(createTextCell(formatPercent(model.win_rate)));
+        row.appendChild(createTextCell(formatMetric(model.calmar_ratio)));
+        row.appendChild(createTextCell(formatInteger(model.total_trades)));
+        row.appendChild(createTextCell(formatInteger(model.days_active)));
+        row.appendChild(createTextCell((model.current_strategy_version || "").slice(0, 8) || "—", "mono"));
+
+        elements.rankingsBody.appendChild(row);
+      });
+    }
+
+    function createTextCell(value, className = "") {
+      const cell = document.createElement("td");
+      if (className) {
+        cell.className = className;
+      }
+      cell.textContent = value;
+      return cell;
+    }
+
+    function renderPanel() {
+      const selectedModel = state.leaderboard?.models.find((model) => model.model_id === state.selectedModelId);
+      elements.panelDetails.replaceChildren();
+
+      if (!selectedModel) {
+        elements.panelTitle.textContent = "Choose a model";
+        elements.panelSubtitle.textContent = "Select a row from the rankings table to inspect the current public metadata and latest equity timestamp.";
+        return;
+      }
+
+      const equityPoints = state.equityByModel.get(selectedModel.model_id) || [];
+      const lastPoint = equityPoints[equityPoints.length - 1];
+
+      elements.panelTitle.textContent = selectedModel.model_id;
+      elements.panelSubtitle.textContent = `${selectedModel.provider || "Unknown provider"} model with ${formatInteger(selectedModel.days_active)} active eval day(s).`;
+
+      elements.panelDetails.append(
+        createDetailItem("Model ID", selectedModel.model_id, true),
+        createDetailItem("Repository", selectedModel.repo_url || "Unavailable", false, selectedModel.repo_url || ""),
+        createDetailItem("Strategy version", selectedModel.current_strategy_version || "Unavailable", true),
+        createDetailItem("Days active", formatInteger(selectedModel.days_active), true),
+        createDetailItem("Last updated", lastPoint ? lastPoint.date : "Unavailable", true)
+      );
+    }
+
+    function createDetailItem(label, value, useMonospace, href = "") {
+      const wrapper = document.createElement("div");
+      wrapper.className = "detail-item";
+      const labelElement = document.createElement("span");
+      labelElement.textContent = label;
+      wrapper.appendChild(labelElement);
+
+      if (href) {
+        const link = document.createElement("a");
+        link.href = href;
+        link.target = "_blank";
+        link.rel = "noreferrer";
+        link.textContent = value;
+        if (useMonospace) {
+          link.className = "mono";
+        }
+        wrapper.appendChild(link);
+        return wrapper;
+      }
+
+      const valueElement = document.createElement("strong");
+      valueElement.textContent = value;
+      if (useMonospace) {
+        valueElement.className = "mono";
+      }
+      wrapper.appendChild(valueElement);
+      return wrapper;
+    }
+
+    function renderChart() {
+      const sortedModels = getSortedModels();
+      const allDates = [...new Set(sortedModels.flatMap((model) => {
+        const points = state.equityByModel.get(model.model_id) || [];
+        return points.map((point) => point.date);
+      }))].sort();
+
+      const datasets = sortedModels.map((model, index) => {
+        const points = state.equityByModel.get(model.model_id) || [];
+        const pointMap = new Map(points.map((point) => [point.date, point.equity]));
+        return {
+          label: model.model_id,
+          data: allDates.map((date) => pointMap.get(date) ?? null),
+          borderColor: datasetPalette[index % datasetPalette.length],
+          backgroundColor: `${datasetPalette[index % datasetPalette.length]}22`,
+          borderWidth: 2.6,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          pointHitRadius: 10,
+          spanGaps: true,
+          tension: 0.18,
+        };
+      });
+
+      if (state.chart) {
+        state.chart.destroy();
+      }
+
+      state.chart = new Chart(elements.chartCanvas, {
+        type: "line",
+        data: {
+          labels: allDates,
+          datasets,
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: "index",
+            intersect: false,
+          },
+          animation: {
+            duration: 500,
+          },
+          plugins: {
+            legend: {
+              position: "bottom",
+              labels: {
+                color: "#2f2418",
+                boxWidth: 12,
+                boxHeight: 12,
+                usePointStyle: true,
+                pointStyle: "circle",
+                padding: 18,
+                font: {
+                  family: "Space Grotesk",
+                },
+              },
+            },
+            tooltip: {
+              backgroundColor: "rgba(47, 36, 24, 0.92)",
+              titleFont: {
+                family: "Space Grotesk",
+              },
+              bodyFont: {
+                family: "IBM Plex Mono",
+              },
+              callbacks: {
+                label(context) {
+                  return `${context.dataset.label}: ${formatMetric(context.parsed.y)}`;
+                },
+              },
+            },
+          },
+          scales: {
+            x: {
+              grid: {
+                color: "rgba(106, 72, 42, 0.08)",
+              },
+              ticks: {
+                color: "#74614d",
+                maxRotation: 0,
+                autoSkipPadding: 16,
+                font: {
+                  family: "IBM Plex Mono",
+                },
+              },
+            },
+            y: {
+              grid: {
+                color: "rgba(106, 72, 42, 0.08)",
+              },
+              ticks: {
+                color: "#74614d",
+                callback(value) {
+                  return formatMetric(value);
+                },
+                font: {
+                  family: "IBM Plex Mono",
+                },
+              },
+            },
+          },
+        },
+      });
+    }
+
+    function renderSummary() {
+      const models = state.leaderboard?.models || [];
+      elements.updatedAt.textContent = formatTimestamp(state.leaderboard?.updated_at || "");
+      elements.modelCount.textContent = formatInteger(models.length);
+      elements.daysActiveTotal.textContent = formatInteger(models.reduce((total, model) => total + Number(model.days_active || 0), 0));
+    }
+
+    function render() {
+      updateSortIndicators();
+      renderSummary();
+
+      const models = state.leaderboard?.models || [];
+      const hasModels = models.length > 0;
+      elements.statusBanner.hidden = hasModels;
+      elements.tableEmpty.hidden = hasModels;
+      elements.tableWrap.hidden = !hasModels;
+
+      if (!hasModels) {
+        renderPanel();
+        renderChart();
+        return;
+      }
+
+      if (!state.selectedModelId) {
+        state.selectedModelId = getSortedModels()[0]?.model_id || null;
+      }
+
+      renderTable();
+      renderPanel();
+      renderChart();
+    }
+
+    function setStatus(message, isError = false) {
+      elements.statusBanner.hidden = false;
+      elements.statusBanner.className = isError ? "status-banner error" : "status-banner";
+      elements.statusBanner.textContent = message;
+    }
+
+    async function loadLeaderboard() {
+      setStatus("Loading leaderboard data…");
+
+      const leaderboard = await fetchJson("./data/leaderboard.json");
+      const previous = await fetchJson("./data/leaderboard_prev.json", { updated_at: "", models: [] });
+
+      const models = Array.isArray(leaderboard.models) ? leaderboard.models : [];
+      const previousModels = Array.isArray(previous.models) ? previous.models : [];
+
+      const equityEntries = await Promise.all(
+        models.map(async (model) => {
+          const equity = await fetchJson(`./data/${encodeURIComponent(model.model_id)}_equity.json`, []);
+          return [model.model_id, Array.isArray(equity) ? equity : []];
+        })
+      );
+
+      state.leaderboard = {
+        updated_at: leaderboard.updated_at || "",
+        models,
+      };
+      state.previousByModel = new Map(previousModels.map((model) => [model.model_id, model]));
+      state.equityByModel = new Map(equityEntries);
+      state.selectedModelId = getSortedModels()[0]?.model_id || null;
+
+      render();
+    }
+
+    elements.sortButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const key = button.dataset.sort;
+        if (!key) {
+          return;
+        }
+
+        if (state.sortKey === key) {
+          state.sortDirection = state.sortDirection === "asc" ? "desc" : "asc";
+        } else {
+          state.sortKey = key;
+          state.sortDirection = sortDefaults[key] || "asc";
+        }
+
+        render();
+      });
+    });
+
+    loadLeaderboard().catch((error) => {
+      console.error(error);
+      setStatus(`Unable to load leaderboard data: ${error.message}`, true);
+      elements.updatedAt.textContent = "Unavailable";
+      elements.modelCount.textContent = "0";
+      elements.daysActiveTotal.textContent = "0";
+    });
+  </script>
+</body>
+</html>
