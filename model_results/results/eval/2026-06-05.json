@@ -1,0 +1,19 @@
+{
+  "run_id": "2026-06-05",
+  "mode": "eval",
+  "model_id": "",
+  "strategy_sha": "c6a56b5173e25e3ee38f6ff28567797e463e9a04",
+  "start_date": "2026-06-05",
+  "end_date": "2026-06-06",
+  "sharpe": 0.0,
+  "max_drawdown": 0.0,
+  "win_rate": 0.0,
+  "calmar_ratio": 0.0,
+  "annualized_return": 0.0,
+  "volatility": 0.0,
+  "total_trades": 0,
+  "avg_spread_cost_pips": 0.0,
+  "runtime_seconds": 0.028,
+  "completed_at": "2026-06-06T11:12:24.447275+00:00",
+  "timed_out": false
+}
