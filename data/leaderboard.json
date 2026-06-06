@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-06-05T12:28:28.933647Z",
+  "updated_at": "2026-06-06T11:11:55.934670Z",
   "models": [
     {
       "model_id": "gemini-3-flash-preview",
@@ -9,7 +9,7 @@
       "win_rate": 0.0,
       "calmar_ratio": 0.0,
       "total_trades": 0,
-      "days_active": 4,
+      "days_active": 5,
       "current_strategy_version": "44eaf139a69b8b19e4dd7fc1a5ba71b2e14cffd4",
       "repo_url": "https://github.com/fxquantbench/gemini-3-flash-preview"
     }
