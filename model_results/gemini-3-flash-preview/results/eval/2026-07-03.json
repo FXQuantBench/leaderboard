@@ -1,0 +1,19 @@
+{
+  "run_id": "2026-07-03",
+  "mode": "eval",
+  "model_id": "gemini-3-flash-preview",
+  "strategy_sha": "09e8ee8561069bc3371b223253bde9448debb379",
+  "start_date": "2026-07-03",
+  "end_date": "2026-07-04",
+  "sharpe": 0.0,
+  "max_drawdown": 0.0,
+  "win_rate": 0.0,
+  "calmar_ratio": 0.0,
+  "annualized_return": 0.0,
+  "volatility": 0.0,
+  "total_trades": 0,
+  "avg_spread_cost_pips": 0.0,
+  "runtime_seconds": 0.027,
+  "completed_at": "2026-07-04T08:46:29.723841+00:00",
+  "timed_out": false
+}
