@@ -53,6 +53,24 @@ Then open `http://localhost:8080`.
 
 `file://` is not a supported preview mode for the frontend because the page fetches JSON data from `./data/`.
 
+## Archiving a model
+
+Archive a model from a clean, current `main` checkout:
+
+```bash
+python archive_model.py <model_id>
+```
+
+The command fetches `origin/main` and refuses to proceed unless the local worktree is clean and local `main` exactly matches it. It also requires a configured, pushable `origin` remote and credentials that can create branches and push to `main`.
+
+For `python archive_model.py gemini-3-flash-preview`, the command:
+
+1. Creates and pushes `archive/gemini-3-flash-preview` from the current `main` commit. The branch is a full pre-removal snapshot, including the model's eval and backtest results, metadata, generated equity file, and leaderboard snapshots.
+2. Removes `model_results/gemini-3-flash-preview/`, the matching `models.json` entry, and `data/gemini-3-flash-preview_equity.json` from `main`.
+3. Regenerates the shared leaderboard artifacts, commits the cleanup as `archive: retire gemini-3-flash-preview`, and pushes `main`.
+
+No Git history is rewritten. Archive branches are immutable by convention; protect the `archive/*` pattern in repository settings if that must be enforced. If a remote operation fails after the archive branch is pushed, the command does not roll back local changes or delete the archive branch. Inspect the checkout and retry or repair the failed push deliberately.
+
 ## GitHub Actions
 
 - `.github/workflows/aggregate.yml` runs on pushes to eval JSON inputs, regenerates `data/`, and commits updated artifacts back to `main` using `BENCHMARK_BOT_TOKEN`.
