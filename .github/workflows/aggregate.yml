@@ -11,6 +11,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: leaderboard-write
+  cancel-in-progress: false
+
 jobs:
   aggregate:
     runs-on: ubuntu-latest

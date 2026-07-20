@@ -55,6 +55,14 @@ Then open `http://localhost:8080`.
 
 ## Archiving a model
 
+### GitHub Actions
+
+In GitHub, open **Actions**, select **Archive Model Performance**, click **Run workflow**, and enter the active model ID. The workflow always checks out the latest `main`, creates `archive/<model_id>`, and pushes the archive branch before removing the model from `main`.
+
+The workflow uses `BENCHMARK_BOT_TOKEN`, which must be configured as a repository Actions secret with permission to create branches and push to `main`. Archive operations and normal aggregation share a write lock, so GitHub queues either workflow until the other has finished.
+
+### Local command
+
 Archive a model from a clean, current `main` checkout:
 
 ```bash

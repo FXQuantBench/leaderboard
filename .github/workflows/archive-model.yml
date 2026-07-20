@@ -1,0 +1,40 @@
+name: Archive Model Performance
+
+on:
+  workflow_dispatch:
+    inputs:
+      model_id:
+        description: Active model ID to archive
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: leaderboard-write
+  cancel-in-progress: false
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.BENCHMARK_BOT_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Archive model
+        env:
+          MODEL_ID: ${{ inputs.model_id }}
+        run: |
+          git config user.name "fxquantbench-bot"
+          git config user.email "actions@users.noreply.github.com"
+          python archive_model.py "$MODEL_ID"
